@@ -1,4 +1,4 @@
-package com.back.orders.orders.dto;
+package com.back.domain.orders.dto;
 
 import com.back.orders.orders.entity.Order;
 import org.apache.catalina.User;

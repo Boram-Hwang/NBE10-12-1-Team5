@@ -1,9 +1,10 @@
-package com.back.orders.orders.entity;
+package com.back.domain.orders.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.apache.catalina.User;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 
@@ -11,7 +12,7 @@ import java.time.LocalDateTime;
 @Table(name = "orders")
 @Getter
 @NoArgsConstructor
-public class Order {
+public class Orders {
     // 주문번호
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,17 +20,19 @@ public class Order {
 
     // 고객번호
     @ManyToOne(fetch = FetchType.LAZY)
-    private User usersId;
+    private Users usersId;
 
     // 생성날짜
+    @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createDate;
 
     // 수정날짜
+    @LastModifiedDate
     @Column(nullable = false)
     private LocalDateTime modifyDate;
 
-    // 주문현황
+    // 주문현황 (기본 : false())
     @Column(nullable = false)
     private Boolean state;
 }
