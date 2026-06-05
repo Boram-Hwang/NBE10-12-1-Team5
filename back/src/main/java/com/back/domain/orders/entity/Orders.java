@@ -33,7 +33,7 @@ public class Orders {
 
     // 우편번호
     @Column(nullable = false)
-    private int postcode;
+    private String postcode;
 
     // 주문현황 (기본 : false())
     @Column(nullable = false)
@@ -52,4 +52,10 @@ public class Orders {
     @LastModifiedDate
     @Column(nullable = false)
     private LocalDateTime modifyDate;
+
+    public Orders(String address, String addressDetail, String postcode) {
+        this.address = address;
+        this.addressDetail = addressDetail;
+        this.postcode = postcode;
+    }
 }

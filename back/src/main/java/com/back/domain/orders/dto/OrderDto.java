@@ -10,7 +10,7 @@ public record OrderDto(
         Users usersId,
         String address,
         String addressDetail,
-        int postcode,
+        String postcode,
         boolean state,
         LocalDateTime createDate,
         LocalDateTime modifyDate
