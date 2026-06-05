@@ -57,6 +57,7 @@ public class Orders {
 
     // 수정날짜
     @LastModifiedDate
+    @Column(nullable = false)
     private LocalDateTime modifyDate;
 
 
