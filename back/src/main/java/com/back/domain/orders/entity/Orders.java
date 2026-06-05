@@ -11,7 +11,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import static com.back.domain.orders.entity.OrderStatus.ORDERED;
+import static com.back.domain.orders.entity.OrderStatus.PENDING;
 
 @Entity
 @Table(name = "orders")
@@ -69,7 +69,7 @@ public class Orders {
         this.address = address;
         this.addressDetail = addressDetail;
         this.postcode = postcode;
-        this.status = ORDERED;
+        this.status = PENDING;
         this.totalPrice = totalPrice;
         this.deliveryDate = deliveryDate;
     }
