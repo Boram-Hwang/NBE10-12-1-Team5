@@ -1,24 +1,30 @@
 package com.back.domain.orders.dto;
 
-import com.back.orders.orders.entity.Order;
-import org.apache.catalina.User;
+import com.back.domain.orders.entity.Orders;
+import com.back.domain.users.entity.Users;
 
 import java.time.LocalDateTime;
 
 public record OrderDto(
         int id,
+        Users usersId,
+        String address,
+        String addressDetail,
+        int postcode,
+        boolean state,
         LocalDateTime createDate,
-        LocalDateTime modifyDate,
-        User userId,
-        boolean state
+        LocalDateTime modifyDate
 ) {
-    public OrderDto(Order order) {
+    public OrderDto(Orders orders) {
         this(
-                order.getId(),
-                order.getCreateDate(),
-                order.getModifyDate(),
-                order.getUsersId(),
-                order.getState()
+                orders.getId(),
+                orders.getUsersId(),
+                orders.getAddress(),
+                orders.getAddressDetail(),
+                orders.getPostcode(),
+                orders.getState(),
+                orders.getCreateDate(),
+                orders.getModifyDate()
         );
     }
 }

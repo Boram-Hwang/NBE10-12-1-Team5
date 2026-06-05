@@ -1,5 +1,6 @@
 package com.back.domain.orders.entity;
 
+import com.back.domain.users.entity.Users;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,6 +23,26 @@ public class Orders {
     @ManyToOne(fetch = FetchType.LAZY)
     private Users usersId;
 
+    // 주소
+    @Column(nullable = false)
+    private String address;
+
+    // 상세주소
+    @Column(nullable = false)
+    private String addressDetail;
+
+    // 우편번호
+    @Column(nullable = false)
+    private int postcode;
+
+    // 주문현황 (기본 : false())
+    @Column(nullable = false)
+    private Boolean state;
+
+    // 총가격
+    @Column(nullable = false)
+    private int totalPrice;
+
     // 생성날짜
     @CreatedDate
     @Column(nullable = false, updatable = false)
@@ -31,8 +52,4 @@ public class Orders {
     @LastModifiedDate
     @Column(nullable = false)
     private LocalDateTime modifyDate;
-
-    // 주문현황 (기본 : false())
-    @Column(nullable = false)
-    private Boolean state;
 }
