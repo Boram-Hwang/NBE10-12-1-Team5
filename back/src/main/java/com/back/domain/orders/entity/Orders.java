@@ -34,14 +34,14 @@ public class Orders {
     private String address;
 
     // 상세주소
-    @Column(nullable = false)
+    @Column
     private String addressDetail;
 
     // 우편번호
     @Column(nullable = false)
     private String postcode;
 
-    // 주문현황 (기본 : false())
+    // 주문현황 (기본 : PENDING)
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrderStatus status;
@@ -62,6 +62,7 @@ public class Orders {
 
 
     // 배송일
+    @Column(nullable = false)
     private LocalDate deliveryDate;
 
     public Orders(Users user, String address, String addressDetail, String postcode, int totalPrice, LocalDate deliveryDate) {
