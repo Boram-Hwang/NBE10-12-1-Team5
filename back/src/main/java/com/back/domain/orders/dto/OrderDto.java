@@ -1,30 +1,36 @@
 package com.back.domain.orders.dto;
 
+import com.back.domain.orders.entity.OrderStatus;
 import com.back.domain.orders.entity.Orders;
 import com.back.domain.users.entity.Users;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public record OrderDto(
         int id,
-        Users usersId,
+        int usersId,
         String address,
         String addressDetail,
         String postcode,
-        boolean state,
+        OrderStatus status,
         LocalDateTime createDate,
-        LocalDateTime modifyDate
+        LocalDateTime modifyDate,
+        int totalPrice,
+        LocalDate deleveryDate
 ) {
     public OrderDto(Orders orders) {
         this(
                 orders.getId(),
-                orders.getUsersId(),
+                orders.getUser().getId(),
                 orders.getAddress(),
                 orders.getAddressDetail(),
                 orders.getPostcode(),
-                orders.getState(),
+                orders.getStatus(),
                 orders.getCreateDate(),
-                orders.getModifyDate()
+                orders.getModifyDate(),
+                orders.getTotalPrice(),
+                orders.getDeliveryDate()
         );
     }
 }

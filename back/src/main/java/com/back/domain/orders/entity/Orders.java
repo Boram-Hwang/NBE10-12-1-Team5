@@ -6,11 +6,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import static com.back.domain.orders.entity.OrderStatus.ORDERED;
 
 @Entity
 @Table(name = "orders")
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor
 public class Orders {
@@ -21,7 +26,8 @@ public class Orders {
 
     // 고객번호
     @ManyToOne(fetch = FetchType.LAZY)
-    private Users usersId;
+    @JoinColumn(name = "user_id", nullable = false)
+    private Users user;
 
     // 주소
     @Column(nullable = false)
@@ -36,8 +42,9 @@ public class Orders {
     private String postcode;
 
     // 주문현황 (기본 : false())
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Boolean state;
+    private OrderStatus status;
 
     // 총가격
     @Column(nullable = false)
@@ -53,9 +60,17 @@ public class Orders {
     @Column(nullable = false)
     private LocalDateTime modifyDate;
 
-    public Orders(String address, String addressDetail, String postcode) {
+
+    // 배송일
+    private LocalDate deliveryDate;
+
+    public Orders(Users user, String address, String addressDetail, String postcode, int totalPrice, LocalDate deliveryDate) {
+        this.user = user;
         this.address = address;
         this.addressDetail = addressDetail;
         this.postcode = postcode;
+        this.status = ORDERED;
+        this.totalPrice = totalPrice;
+        this.deliveryDate = deliveryDate;
     }
 }
