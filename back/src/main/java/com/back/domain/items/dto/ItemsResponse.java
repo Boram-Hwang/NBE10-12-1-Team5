@@ -4,7 +4,7 @@ import com.back.domain.items.entity.Items;
 
 import java.time.LocalDateTime;
 
-public record ItemsDto(
+public record ItemsResponse(
         int id,
         String name,
         int price,
@@ -13,7 +13,7 @@ public record ItemsDto(
         LocalDateTime createDate,
         LocalDateTime modifyDate
 ) {
-    public ItemsDto(Items items) {
+    public ItemsResponse(Items items) {
         this(
                 items.getId(),
                 items.getName(),

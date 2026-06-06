@@ -1,5 +1,6 @@
 package com.back.domain.items.entity;
 
+import com.back.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,11 +15,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-public class Items {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-
+public class Items extends BaseEntity {
     private String name;
 
     @Column(columnDefinition = "INT UNSIGNED")
@@ -30,11 +27,18 @@ public class Items {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @CreatedDate
-    @Column(updatable = false)
-    private LocalDateTime createDate;
+    public Items(String name, String description, int price, int inventory) {
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.inventory = inventory;
+    }
 
-    @LastModifiedDate
-    private LocalDateTime modifyDate;
+    public void modify(String name, String description, int price, int inventory) {
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.inventory = inventory;
+    }
 
 }
