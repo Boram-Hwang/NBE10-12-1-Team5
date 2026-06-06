@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 public record OrderDto(
         int id,
-        int usersId,
+        int userId,
         String address,
         String addressDetail,
         String postcode,
@@ -17,7 +17,7 @@ public record OrderDto(
         LocalDateTime createDate,
         LocalDateTime modifyDate,
         int totalPrice,
-        LocalDate deleveryDate
+        LocalDate deliveryDate
 ) {
     public OrderDto(Orders orders) {
         this(
