@@ -1,7 +1,7 @@
 package com.back.domain.orderitems.entity;
 
-import com.back.domain.items.entity.Items;
 import com.back.domain.orders.entity.Orders;
+import com.back.domain.items.entity.Items;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

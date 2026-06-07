@@ -60,7 +60,7 @@ public class Orders extends BaseEntity {
         this.deliveryDate = deliveryDate;
     }
 
-    public void modifyState(OrderStatus status) {
+    public void modifyStatus(OrderStatus status) {
         this.status = status;
     }
 
