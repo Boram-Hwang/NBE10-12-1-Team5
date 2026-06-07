@@ -88,7 +88,7 @@ public class OrderItemService {
         if (order.getStatus() == OrderStatus.PENDING) {
             restoreInventory(orderId);
         }
-        
+
         orderItemRepository.deleteByOrderId(orderId);
     }
 
