@@ -7,8 +7,6 @@ import com.back.domain.orders.entity.Orders;
 import com.back.domain.orders.repository.OrderRepository;
 import com.back.domain.users.entity.Users;
 import com.back.domain.users.service.UserService;
-import jakarta.persistence.EntityManager;
-import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -76,20 +74,57 @@ public class OrderService {
     }
 
     // 주문 삭제
-    public void delete(Orders orders) {
-        orderItemService.deleteOrderItems(orders.getId());
-        orderRepository.delete(orders);
+    public void delete(int id) {
+        // 서비스에서 처리하는 게 좋음
+        Orders order = orderRepository.findById(id).orElseThrow(() -> new NoSuchElementException(
+                "%d번 주문이 없습니다.".formatted(id)
+        ));
+
+        orderItemService.deleteOrderItems(order.getId());
+        orderRepository.delete(order);
     }
 
     // 주문 수정
     public void modify(Orders order, OrderStatus status) {
-        if(status.equals(OrderStatus.CANCELED))
+        // 주문 상태 값이 없을 경우
+        if(status == null) {
+            throw new IllegalArgumentException("주문 상태는 필수입니다.");
+        }
+
+        OrderStatus currentStatus = order.getStatus();
+
+        // 주문 상태가 이미 CANCELED일 경우 중복 처리
+        // 이미 취소된 주문은 어떠상태로도 수정 불가 처리
+        if(currentStatus == OrderStatus.CANCELED) {
+            throw new IllegalStateException("이미 취소된 주문입니다.");
+        }
+
+        // PENDING 상태인 주문만 취소 가능할 경우 예외 처리
+        if(status == OrderStatus.CANCELED && currentStatus != OrderStatus.PENDING) {
+            throw new IllegalStateException("대기 중인 주문만 취소할 수 있습니다.");
+        }
+
+        // 주문취소일 경우 재고 처리
+        if(status == OrderStatus.CANCELED) {
             orderItemService.restoreInventory(order.getId());
-        else
-            order.modifyStatus(status);
+        }
+        order.modifyStatus(status);
     }
 
     public List<Orders> findByUserIdAndDeliveryDate(int userId, LocalDate deliveryDate) {
-        return orderRepository.findByUserIdAndDeliveryDate(userId, deliveryDate);
+        if(deliveryDate == null) {
+            throw new IllegalArgumentException("배송일은 필수입니다.");
+        }
+
+        // 고객의 배송주문 건이 없을 경우
+        List<Orders> orders = orderRepository.findByUserIdAndDeliveryDate(userId, deliveryDate);
+
+        if(orders.isEmpty()) {
+            throw new NoSuchElementException(
+                    "%d번 고객의 %s 배송 주문이 없습니다.".formatted(userId, deliveryDate)
+            );
+        }
+
+        return orders;
     }
 }

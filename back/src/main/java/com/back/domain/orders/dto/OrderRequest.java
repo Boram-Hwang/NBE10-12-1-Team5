@@ -3,6 +3,7 @@ package com.back.domain.orders.dto;
 import com.back.domain.orderitems.dto.OrderItemRequest;
 import com.back.domain.orders.entity.OrderStatus;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -30,6 +31,7 @@ public class OrderRequest {
         ) {}
 
         public record OrderModifyRequest(
+                @NotNull
                 OrderStatus status
         ) {}
 }

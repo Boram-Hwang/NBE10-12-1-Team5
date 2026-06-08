@@ -85,9 +85,7 @@ public class OrderController {
     @Transactional
     @Operation(summary = "주문 삭제")
     public RsData<Void> deleteOrder(@PathVariable int id) {
-        Orders orders = orderService.findById(id);
-
-        orderService.delete(orders);
+        orderService.delete(id);
 
         return new RsData<>(
                   "200-1",
