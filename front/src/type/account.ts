@@ -3,5 +3,7 @@ export type UserDto = {
   createDate: string;
   modifyDate: string;
   email: string;
-  name: string;
+  address: string;
+  addressDetail: string;
+  postcode: string;
 };

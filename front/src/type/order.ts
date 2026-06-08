@@ -3,14 +3,14 @@ export type OrderStatus =
   | "PROCESSING"
   | "SHIPPED"
   | "DELIVERED"
-  | "CANCELLED";
+  | "CANCELED";
 
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   PENDING: "주문확인중",
   PROCESSING: "처리중",
   SHIPPED: "발송완료",
   DELIVERED: "배송완료",
-  CANCELLED: "취소",
+  CANCELED: "취소",
 };
 
 export type OrderDto = {
@@ -26,7 +26,7 @@ export type OrderDto = {
   deliveryDate: string; // YYYY-MM-DD
 };
 
-export type OrderDetailDto = {
+export type OrderItemDto = {
   id: number;
   createDate: string;
   modifyDate: string;
