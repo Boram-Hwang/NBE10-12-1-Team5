@@ -61,6 +61,11 @@ public class Order extends BaseEntity {
         this.status = status;
     }
 
+    public void deleteStatus(OrderStatus status) {
+        this.status = status;
+        this.softDelete();
+    }
+
     public void modifyTotalPrice(int totalPrice) {
         this.totalPrice = totalPrice;
     }

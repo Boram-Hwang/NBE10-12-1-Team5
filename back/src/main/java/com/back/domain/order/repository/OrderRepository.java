@@ -7,5 +7,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface OrderRepository extends JpaRepository<Order, Integer> {
+    // 배송일 조회
     List<Order> findByUserIdAndDeliveryDate(int userId, LocalDate deliveryDate);
 }

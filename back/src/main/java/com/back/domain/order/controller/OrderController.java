@@ -104,13 +104,11 @@ public class OrderController {
             @PathVariable int id,
             @RequestBody @Valid OrderRequest.OrderModifyRequest req
     ) {
-        Order order = orderService.findById(id);
-
-        orderService.modify(order, req.status());
+        orderService.modify(id, req.status());
 
         return new RsData<>(
                 "200-1",
-                "%d번 주문이 수정되었습니다.".formatted(order.getId())
+                "%d번 주문이 수정되었습니다.".formatted(id)
         );
     }
 

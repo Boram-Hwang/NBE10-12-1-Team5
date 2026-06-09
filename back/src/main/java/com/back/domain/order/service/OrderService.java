@@ -92,11 +92,14 @@ public class OrderService {
         ));
 
         orderProductService.deleteOrderProducts(order.getId());
-        orderRepository.delete(order);
+        order.deleteStatus(OrderStatus.CANCELED);
     }
 
     // 주문 수정
-    public void modify(Order order, OrderStatus status) {
+    public void modify(int id, OrderStatus status) {
+        Order order = orderRepository.findById(id).orElseThrow(() -> new NoSuchElementException(
+                "%d번 주문이 없습니다.".formatted(id)
+        ));
         // 주문 상태 값이 없을 경우
         if(status == null) {
             throw new IllegalArgumentException("주문 상태는 필수입니다.");
@@ -110,15 +113,16 @@ public class OrderService {
             throw new IllegalStateException("이미 취소된 주문입니다.");
         }
 
-        // PENDING 상태인 주문만 취소 가능할 경우 예외 처리
+        // PENDING(주문확인중) 상태인 주문만 취소 가능할 경우 예외 처리
         if(status == OrderStatus.CANCELED && currentStatus != OrderStatus.PENDING) {
-            throw new IllegalStateException("대기 중인 주문만 취소할 수 있습니다.");
+            throw new IllegalStateException("주문확인중인 주문만 취소할 수 있습니다.");
         }
 
         // 주문취소일 경우 재고 처리
         if(status == OrderStatus.CANCELED) {
             orderProductService.restoreInventory(order.getId());
         }
+        // 주문취소시
         order.modifyStatus(status);
     }
 

@@ -16,7 +16,8 @@ public record OrderResponse(
         LocalDateTime createDate,
         LocalDateTime modifyDate,
         int totalPrice,
-        LocalDate deliveryDate
+        LocalDate deliveryDate,
+        LocalDateTime deleteDate
 ) {
     public OrderResponse(Order order) {
         this(
@@ -29,7 +30,8 @@ public record OrderResponse(
                 order.getCreateDate(),
                 order.getModifyDate(),
                 order.getTotalPrice(),
-                order.getDeliveryDate()
+                order.getDeliveryDate(),
+                order.getDeleteDate()
         );
     }
 }
