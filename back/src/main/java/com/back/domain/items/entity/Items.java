@@ -27,15 +27,20 @@ public class Items extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    public Items(String name, String description, int price, int inventory) {
+    @Column(name = "IMAGE_URL", length = 1000)
+    private String imageUrl;
+
+    public Items(String name, String imageUrl, String description, int price, int inventory) {
         this.name = name;
+        this.imageUrl = imageUrl;
         this.description = description;
         this.price = price;
         this.inventory = inventory;
     }
 
-    public void modify(String name, String description, int price, int inventory) {
+    public void modify(String name, String imageUrl, String description, int price, int inventory) {
         this.name = name;
+        this.imageUrl = imageUrl;
         this.description = description;
         this.price = price;
         this.inventory = inventory;
@@ -43,6 +48,10 @@ public class Items extends BaseEntity {
 
     public void modifyInventory(int inventory) {
         this.inventory = inventory;
+    }
+
+    public void modifyImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
 }

@@ -42,66 +42,77 @@ public class BaseInitData {
 
                 Items item1 = itemsRepository.save(new Items(
                         "Ethiopia Yirgacheffe",
+                        null,
                         "플로럴, 시트러스 계열의 밝고 산뜻한 에티오피아 원두",
                         1000,
                         253
                 ));
                 Items item2 = itemsRepository.save(new Items(
                         "Colombia Huila",
+                        null,
                         "카라멜, 헤이즐넛 풍미의 균형 잡힌 콜롬비아 원두",
                         3500,
                         236
                 ));
                 Items item3 = itemsRepository.save(new Items(
                         "Guatemala Antigua",
+                        null,
                         "다크초콜릿, 스모키 향의 과테말라 원두",
                         5000,
                         217
                 ));
                 Items item4 = itemsRepository.save(new Items(
                         "Brazil Santos",
+                        null,
                         "고소하고 부드러운 브라질 산토스 원두",
                         7500,
                         195
                 ));
                 Items item5 = itemsRepository.save(new Items(
                         "Kenya AA",
+                        null,
                         "자몽, 블랙커런트의 강렬한 산미와 와인 같은 풍미의 케냐 원두",
                         4500,
                         170
                 ));
                 Items item6 = itemsRepository.save(new Items(
                         "Costa Rica Tarrazu",
+                        null,
                         "깔끔한 산미와 시트러스, 아몬드의 고소함이 어우러진 코스타리카 원두",
                         13000,
                         158
                 ));
                 Items item7 = itemsRepository.save(new Items(
                         "Indonesia Sumatra Mandheling",
+                        null,
                         "묵직한 바디감과 흙 내음, 허브 향이 매력적인 인도네시아 원두",
                         9500,
                         131
                 ));
                 Items item8 = itemsRepository.save(new Items(
                         "Ethiopia Sidamo",
+                        null,
                         "베리류의 달콤함과 깊은 꽃향기가 감도는 에티오피아 원두",
                         12000,
                         119
                 ));
                 Items item9 = itemsRepository.save(new Items(
                         "Jamaica Blue Mountain",
+                        null,
                         "부드러운 산미와 쓴맛이 완벽한 조화를 이루는 자메이카 명품 원두",
                         25000,
                         95
                 ));
                 Items item10 = itemsRepository.save(new Items(
                         "Tanzania Kilimanjaro",
+                        null,
                         "짜릿한 산미와 와인 향, 훌륭한 밸런스를 가진 탄자니아 원두",
                         12500,
                         74
                 ));
                 Items item11 = itemsRepository.save(new Items(
                         "El Salvador Bourbon",
+                        null,
                         "꿀 같은 달콤함과 부드러운 밀크초콜릿 풍미의 엘살바도르 원두",
                         10000,
                         57

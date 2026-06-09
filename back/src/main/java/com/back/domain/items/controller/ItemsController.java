@@ -54,7 +54,7 @@ public class ItemsController {
     public RsData<ItemsResponse> createItem(
             @RequestBody @Valid ItemsRequest.ItemAddReqBody req
             ) {
-        Items item = itemsService.create(req.name(), req.description(), req.price(), req.inventory());
+        Items item = itemsService.create(req.name(), req.imageUrl(), req.description(), req.price(), req.inventory());
 
         return new RsData<>(
                 "201-1",
@@ -87,11 +87,27 @@ public class ItemsController {
     ) {
         Items item = itemsService.findById(id).get();
 
-        itemsService.modify(item, req.name(), req.description(), req.price(), req.inventory());
+        itemsService.modify(item, req.name(), req.imageUrl(), req.description(), req.price(), req.inventory());
 
         return new RsData<>(
           "200-1",
           "%d번 상품이 수정되었습니다.".formatted(item.getId())
+        );
+    }
+
+    // 상품 이미지 수정
+    @PutMapping("/{id}/imageUrl")
+    @Transactional
+    @Operation(summary = "상품 이미지 수정")
+    public RsData<Void> modifyImageUrl(
+            @PathVariable int id,
+            @RequestBody @Valid ItemsRequest.ItemImageUrlModifyReqBody reqMod){
+
+        itemsService.modifyItemImageUrlOnly(id, reqMod);
+
+        return new RsData<>(
+                "200-1",
+                "%d번 상품 이미지가 수정되었습니다.".formatted(id)
         );
     }
 }

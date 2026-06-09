@@ -1,5 +1,6 @@
 package com.back.domain.items.service;
 
+import com.back.domain.items.dto.ItemsRequest;
 import com.back.domain.items.entity.Items;
 import com.back.domain.items.repository.ItemsRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,14 +22,14 @@ public class ItemsService {
     }
 
     // 상품 생성 - create
-    public Items create(String name, String description, int price, int inventory) {
+    public Items create(String name, String imageUrl, String description, int price, int inventory) {
         List<Items> allItems = itemsRepository.findAll();
         for(Items item : allItems) {
             if(item.getName().equals(name)) {
                 throw new IllegalArgumentException("이미 존재하는 상품 이름입니다. : " + name);
             }
         }
-        Items item = new Items(name, description, price, inventory);
+        Items item = new Items(name, imageUrl, description, price, inventory);
         return itemsRepository.save(item);
     }
 
@@ -45,8 +46,14 @@ public class ItemsService {
     }
 
     // 상품 수정 - modify 전체 수정이 아닌 item 하나를 수정
-    public void modify(Items item, String name, String description, int price, int inventory) {
-        item.modify(name, description, price, inventory);
+    public void modify(Items item, String name, String imageUrl, String description, int price, int inventory) {
+        item.modify(name, imageUrl, description, price, inventory);
+    }
+
+    public void modifyItemImageUrlOnly(int id, ItemsRequest.ItemImageUrlModifyReqBody req) {
+        Items item = itemsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다. ID :" + id));
+        item.modifyImageUrl(req.imageUrl());
     }
 
     // 상품 삭제 - delete 전체 삭제가 아닌 item 하나를 삭제
