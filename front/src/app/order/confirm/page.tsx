@@ -42,13 +42,13 @@ export default function OrderConfirmPage() {
     setSubmitting(true);
     try {
       // 1. 이메일로 기존 유저 조회, 없으면 신규 등록
-      const allUsers: UserDto[] = await apiFetch("/api/users");
+      const allUsers: UserDto[] = await apiFetch("/api/user");
       let userId: number;
       const existing = allUsers.find((u) => u.email === info.email);
       if (existing) {
         userId = existing.id;
       } else {
-        const userRes: RsData<UserDto> = await apiFetch("/api/users", {
+        const userRes: RsData<UserDto> = await apiFetch("/api/user", {
           method: "POST",
           body: JSON.stringify({
             email: info.email,
@@ -61,7 +61,7 @@ export default function OrderConfirmPage() {
       }
 
       // 2. 주문 + 주문 품목 한 번에 생성
-      const orderRes: RsData<OrderDto> = await apiFetch("/api/orders", {
+      const orderRes: RsData<OrderDto> = await apiFetch("/api/order", {
         method: "POST",
         body: JSON.stringify({
           userId,
@@ -70,9 +70,9 @@ export default function OrderConfirmPage() {
           postcode: info.postcode,
           status: "PENDING",
           totalPrice: total,
-          orderItems: cartItems.map((c) => ({
-            itemId: c.itemId,
-            itemQuantity: c.quantity,
+          orderProducts: cartItems.map((c) => ({
+            productId: c.productId,
+            productQuantity: c.quantity,
           })),
         }),
       });
@@ -131,7 +131,7 @@ export default function OrderConfirmPage() {
             ) : (
               <div className="space-y-3">
                 {cartItems.map((item) => (
-                  <div key={item.itemId} className="flex items-center gap-3">
+                  <div key={item.productId} className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
                       <Image src="/coffee_bean.jpg" alt={item.name} width={40} height={40} className="w-full h-full object-cover" />
                     </div>

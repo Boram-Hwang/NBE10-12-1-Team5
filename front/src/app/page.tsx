@@ -5,9 +5,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/backend/client";
 import { getCart } from "@/lib/cart";
-import type { ItemDto } from "@/type/product";
+import type { ProductDto } from "@/type/product";
 import type { UserDto } from "@/type/account";
-import type { OrderItemDto, OrderDto, OrderStatus } from "@/type/order";
+import type { OrderProductDto, OrderDto, OrderStatus } from "@/type/order";
 import { ORDER_STATUS_LABEL } from "@/type/order";
 import type { RsData } from "@/type/rsData";
 
@@ -53,11 +53,11 @@ function groupOrders(orders: OrderDto[]): OrderGroup[] {
   return Array.from(map.values());
 }
 
-type EditItem = { itemId: number; itemName: string; itemQuantity: number };
+type EditProduct = { productId: number; productName: string; productQuantity: number };
 
 export default function MainPage() {
   // 상품 목록
-  const [items, setItems] = useState<ItemDto[]>([]);
+  const [products, setProducts] = useState<ProductDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [cartCount, setCartCount] = useState(0);
@@ -76,26 +76,26 @@ export default function MainPage() {
 
   // 선택된 개별 주문 상세
   const [selectedOrder, setSelectedOrder] = useState<OrderDto | null>(null);
-  const [orderItems, setOrderItems] = useState<OrderItemDto[]>([]);
+  const [orderProducts, setOrderProducts] = useState<OrderProductDto[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
 
   // 수정 모드
   const [editMode, setEditMode] = useState(false);
-  const [editItems, setEditItems] = useState<EditItem[]>([]);
-  const [allItems, setAllItems] = useState<ItemDto[]>([]);
-  const [addItemId, setAddItemId] = useState<number | "">("");
+  const [editProducts, setEditProducts] = useState<EditProduct[]>([]);
+  const [allProducts, setAllProducts] = useState<ProductDto[]>([]);
+  const [addProductId, setAddProductId] = useState<number | "">("");
   const [addQty, setAddQty] = useState(1);
   const [editSaving, setEditSaving] = useState(false);
 
   useEffect(() => {
-    apiFetch("/api/items")
-      .then((data: ItemDto[]) => { setItems(data); setAllItems(data); })
+    apiFetch("/api/Product")
+      .then((data: ProductDto[]) => { setProducts(data); setAllProducts(data); })
       .finally(() => setLoading(false));
     setCartCount(getCart().reduce((sum, c) => sum + c.quantity, 0));
   }, []);
 
-  const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
-  const paged = items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(products.length / PAGE_SIZE));
+  const paged = products.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // 파생: 그룹 목록
   const myGroups = myOrders ? groupOrders(myOrders) : null;
@@ -110,10 +110,10 @@ export default function MainPage() {
     setSelectedOrder(null);
     setEditMode(false);
     try {
-      const users: UserDto[] = await apiFetch("/api/users");
+      const users: UserDto[] = await apiFetch("/api/user");
       const user = users.find((u) => u.email === emailInput.trim());
       if (!user) { setSearchError("해당 이메일로 등록된 계정이 없습니다."); return; }
-      const orders: OrderDto[] = await apiFetch("/api/orders");
+      const orders: OrderDto[] = await apiFetch("/api/order");
       const mine = orders.filter((o) => o.userId === user.id);
       setMyOrders(mine);
       if (mine.length === 0) setSearchError("주문 내역이 없습니다.");
@@ -139,13 +139,14 @@ export default function MainPage() {
       return;
     }
     setSelectedOrder(order);
+    setOrderProducts([]);
     setEditMode(false);
     setDetailLoading(true);
     try {
-      const res: RsData<OrderItemDto[]> = await apiFetch(`/api/orders/${order.id}/items`);
-      setOrderItems(res.data ?? []);
+      const res: RsData<OrderProductDto[]> = await apiFetch(`/api/order/${order.id}/product`);
+      setOrderProducts(res.data ?? []);
     } catch {
-      setOrderItems([]);
+      setOrderProducts([]);
     } finally {
       setDetailLoading(false);
     }
@@ -156,7 +157,7 @@ export default function MainPage() {
     if (!selectedOrder) return;
     if (!confirm(`#${selectedOrder.id} 주문을 취소하시겠습니까?`)) return;
     try {
-      await apiFetch(`/api/orders/${selectedOrder.id}`, {
+      await apiFetch(`/api/order/${selectedOrder.id}`, {
         method: "PUT",
         body: JSON.stringify({ status: "CANCELED" }),
       });
@@ -174,53 +175,53 @@ export default function MainPage() {
 
   // 수정 모드
   const enterEditMode = () => {
-    setEditItems(orderItems.map((it) => ({
-      itemId: it.itemId, itemName: it.itemName, itemQuantity: it.itemQuantity,
+    setEditProducts(orderProducts.map((it) => ({
+      productId: it.productId, productName: it.productName, productQuantity: it.productQuantity,
     })));
-    setAddItemId("");
+    setAddProductId("");
     setAddQty(1);
     setEditMode(true);
   };
 
-  const handleEditQty = (itemId: number, qty: number) =>
-    setEditItems((prev) => prev.map((it) => it.itemId === itemId ? { ...it, itemQuantity: Math.max(1, qty) } : it));
+  const handleEditQty = (productId: number, qty: number) =>
+    setEditProducts((prev) => prev.map((it) => it.productId === productId ? { ...it, productQuantity: Math.max(1, qty) } : it));
 
-  const handleEditRemove = (itemId: number) =>
-    setEditItems((prev) => prev.filter((it) => it.itemId !== itemId));
+  const handleEditRemove = (productId: number) =>
+    setEditProducts((prev) => prev.filter((it) => it.productId !== productId));
 
   const handleAddItem = () => {
-    if (!addItemId) return;
-    const item = allItems.find((i) => i.id === Number(addItemId));
-    if (!item) return;
-    const existing = editItems.find((it) => it.itemId === item.id);
+    if (!addProductId) return;
+    const product = allProducts.find((i) => i.id === Number(addProductId));
+    if (!product) return;
+    const existing = editProducts.find((it) => it.productId === product.id);
     if (existing) {
-      setEditItems((prev) => prev.map((it) =>
-        it.itemId === item.id ? { ...it, itemQuantity: it.itemQuantity + addQty } : it
+      setEditProducts((prev) => prev.map((it) =>
+        it.productId === product.id ? { ...it, productQuantity: it.productQuantity + addQty } : it
       ));
     } else {
-      setEditItems((prev) => [...prev, { itemId: item.id, itemName: item.name, itemQuantity: addQty }]);
+      setEditProducts((prev) => [...prev, { productId: product.id, productName: product.name, productQuantity: addQty }]);
     }
-    setAddItemId("");
+    setAddProductId("");
     setAddQty(1);
   };
 
   const handleEditSave = async () => {
-    if (!selectedOrder || editItems.length === 0) {
+    if (!selectedOrder || editProducts.length === 0) {
       alert("최소 1개 이상의 품목이 필요합니다.");
       return;
     }
     setEditSaving(true);
     try {
-      await apiFetch(`/api/orders/${selectedOrder.id}/items`, {
+      await apiFetch(`/api/order/${selectedOrder.id}/product`, {
         method: "PUT",
-        body: JSON.stringify(editItems.map((it) => ({ itemId: it.itemId, itemQuantity: it.itemQuantity }))),
+        body: JSON.stringify(editProducts.map((it) => ({ productId: it.productId, productQuantity: it.productQuantity }))),
       });
-      const res: RsData<OrderItemDto[]> = await apiFetch(`/api/orders/${selectedOrder.id}/items`);
-      const updatedItems = res.data ?? [];
-      setOrderItems(updatedItems);
+      const res: RsData<OrderProductDto[]> = await apiFetch(`/api/order/${selectedOrder.id}/product`);
+      const updatedProducts = res.data ?? [];
+      setOrderProducts(updatedProducts);
 
       // 로컬 상태를 즉시 동기화하기 위해 새 총 가격 계산
-      const newTotalPrice = updatedItems.reduce((sum, it) => sum + it.itemPrice * it.itemQuantity, 0);
+      const newTotalPrice = updatedProducts.reduce((sum, it) => sum + it.productPrice * it.productQuantity, 0);
 
       // 선택된 주문의 총금액 및 목록의 총금액 실시간 업데이트
       setSelectedOrder((prev) => prev ? { ...prev, totalPrice: newTotalPrice } : null);
@@ -237,9 +238,9 @@ export default function MainPage() {
   };
 
   // 수정 중인 품목들의 실시간 총 합계 금액 계산
-  const editTotal = editItems.reduce((sum, it) => {
-    const item = allItems.find((i) => i.id === it.itemId);
-    return sum + (item ? item.price : 0) * it.itemQuantity;
+  const editTotal = editProducts.reduce((sum, it) => {
+    const product = allProducts.find((i) => i.id === it.productId);
+    return sum + (product ? product.price : 0) * it.productQuantity;
   }, 0);
 
   return (
@@ -329,12 +330,6 @@ export default function MainPage() {
                                   >
                                     수정
                                   </button>
-                                  <button
-                                    onClick={async () => {
-                                      await handleSelectOrder(order);
-                                    }}
-                                    className="hidden"
-                                  />
                                 </div>
                               )}
                             </div>
@@ -348,27 +343,27 @@ export default function MainPage() {
                                   /* 수정 모드 */
                                   <div className="flex flex-col gap-2">
                                     <div className="max-h-32 overflow-y-auto flex flex-col gap-1.5">
-                                      {editItems.map((it) => (
-                                        <div key={it.itemId} className="flex items-center gap-1">
-                                          <span className="flex-1 text-xs truncate">{it.itemName}</span>
+                                      {editProducts.map((it) => (
+                                        <div key={it.productId} className="flex items-center gap-1">
+                                          <span className="flex-1 text-xs truncate">{it.productName}</span>
                                           <input
-                                            type="number" min={1} value={it.itemQuantity}
-                                            onChange={(e) => handleEditQty(it.itemId, Number(e.target.value))}
+                                            type="number" min={1} value={it.productQuantity}
+                                            onChange={(e) => handleEditQty(it.productId, Number(e.target.value))}
                                             className="w-10 border border-gray-300 rounded px-1 py-0.5 text-xs text-center"
                                           />
-                                          <button onClick={() => handleEditRemove(it.itemId)} className="text-red-400 hover:text-red-600 text-xs">✕</button>
+                                          <button onClick={() => handleEditRemove(it.productId)} className="text-red-400 hover:text-red-600 text-xs">✕</button>
                                         </div>
                                       ))}
                                     </div>
                                     <div className="flex flex-col gap-1 pt-1 border-t border-gray-100">
                                       <select
-                                        value={addItemId}
-                                        onChange={(e) => setAddItemId(e.target.value === "" ? "" : Number(e.target.value))}
+                                        value={addProductId}
+                                        onChange={(e) => setAddProductId(e.target.value === "" ? "" : Number(e.target.value))}
                                         className="w-full border border-gray-300 rounded px-2 py-1 text-xs"
                                       >
                                         <option value="">상품 선택</option>
-                                        {allItems.map((item) => (
-                                          <option key={item.id} value={item.id}>{item.name}</option>
+                                        {allProducts.map((prod) => (
+                                          <option key={prod.id} value={prod.id}>{prod.name}</option>
                                         ))}
                                       </select>
                                       <div className="flex gap-1">
@@ -377,7 +372,7 @@ export default function MainPage() {
                                           onChange={(e) => setAddQty(Math.max(1, Number(e.target.value)))}
                                           className="w-12 border border-gray-300 rounded px-1 py-0.5 text-xs text-center"
                                         />
-                                        <button onClick={handleAddItem} disabled={!addItemId}
+                                        <button onClick={handleAddItem} disabled={!addProductId}
                                           className="flex-1 border border-gray-300 rounded px-2 py-0.5 text-xs hover:bg-gray-50 disabled:opacity-40">
                                           추가
                                         </button>
@@ -402,17 +397,17 @@ export default function MainPage() {
                                 ) : (
                                   /* 조회 모드 */
                                   <div className="flex flex-col gap-1.5">
-                                    {orderItems.length === 0 ? (
+                                    {orderProducts.length === 0 ? (
                                       <p className="text-xs text-gray-400 text-center py-1">품목 없음</p>
                                     ) : (
                                       <>
                                         <div className="max-h-32 overflow-y-auto flex flex-col gap-1">
-                                          {orderItems.map((it) => (
+                                          {orderProducts.map((it) => (
                                             <div key={it.id} className="flex items-center justify-between text-xs">
-                                              <span className="text-gray-700 truncate flex-1">{it.itemName}</span>
-                                              <span className="text-gray-400 ml-1 flex-shrink-0">×{it.itemQuantity}</span>
+                                              <span className="text-gray-700 truncate flex-1">{it.productName}</span>
+                                              <span className="text-gray-400 ml-1 flex-shrink-0">×{it.productQuantity}</span>
                                               <span className="text-gray-500 ml-1 flex-shrink-0">
-                                                {(it.itemPrice * it.itemQuantity).toLocaleString()}원
+                                                {(it.productPrice * it.productQuantity).toLocaleString()}원
                                               </span>
                                             </div>
                                           ))}
@@ -486,12 +481,12 @@ export default function MainPage() {
         {/* Product Grid */}
         <main className="flex-1 px-6 pb-4 overflow-y-auto">
           {loading && <div className="text-center text-gray-400 py-20 text-sm">로딩중...</div>}
-          {!loading && items.length === 0 && (
+          {!loading && products.length === 0 && (
             <div className="text-center text-gray-400 py-20 text-sm">등록된 상품이 없습니다.</div>
           )}
           <div className="grid grid-cols-3 gap-4">
             {paged.map((item) => (
-              <Link key={item.id} href={`/items/${item.id}`}
+              <Link key={item.id} href={`/products/${item.id}`}
                 className="bg-white border border-gray-300 rounded-2xl aspect-square flex flex-col items-center justify-center p-4 hover:shadow-xl hover:border-transparent transition-all duration-200 group"
               >
                 <div className="w-50 h-50 rounded-xl mb-3 overflow-hidden">

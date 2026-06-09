@@ -25,7 +25,7 @@ export default function AccountsPage() {
 
   const fetchUsers = async () => {
     try {
-      const data: UserDto[] = await apiFetch("/api/users");
+      const data: UserDto[] = await apiFetch("/api/user");
       setUsers(data);
     } catch (err) {
       console.error(err);
@@ -48,7 +48,7 @@ export default function AccountsPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
     try {
-      await apiFetch(`/api/users/${id}`, { method: "DELETE" });
+      await apiFetch(`/api/user/${id}`, { method: "DELETE" });
       setUsers((prev) => prev.filter((u) => u.id !== id));
     } catch (err) {
       console.error(err);
@@ -74,7 +74,7 @@ export default function AccountsPage() {
       return;
     }
     try {
-      await apiFetch(`/api/users/${id}`, {
+      await apiFetch(`/api/user/${id}`, {
         method: "PUT",
         body: JSON.stringify({
           email: editForm.email,

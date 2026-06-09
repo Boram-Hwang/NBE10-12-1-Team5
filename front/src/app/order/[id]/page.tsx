@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { apiFetch } from "@/lib/backend/client";
-import type { OrderItemDto, OrderDto } from "@/type/order";
+import type { OrderProductDto, OrderDto } from "@/type/order";
 import type { UserDto } from "@/type/account";
 import type { RsData } from "@/type/rsData";
 
@@ -15,7 +15,7 @@ export default function OrderDetailPage() {
 
   const [order, setOrder] = useState<OrderDto | null>(null);
   const [user, setUser] = useState<UserDto | null>(null);
-  const [details, setDetails] = useState<OrderItemDto[]>([]);
+  const [details, setDetails] = useState<OrderProductDto[]>([]);
   const [loading, setLoading] = useState(true);
 
   const emailParam = searchParams.get("email") ?? "";
@@ -23,15 +23,14 @@ export default function OrderDetailPage() {
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        // OrderItemDto에 itemName/itemPrice 스냅샷이 있으므로 별도 상품 조회 불필요
         const [orderData, detailRes] = await Promise.all([
-          apiFetch(`/api/orders/${id}`) as Promise<OrderDto>,
-          apiFetch(`/api/orders/${id}/items`) as Promise<RsData<OrderItemDto[]>>,
+          apiFetch(`/api/order/${id}`) as Promise<OrderDto>,
+          apiFetch(`/api/order/${id}/product`) as Promise<RsData<OrderProductDto[]>>,
         ]);
         setOrder(orderData);
         setDetails(detailRes.data ?? []);
 
-        const userData: UserDto = await apiFetch(`/api/users/${orderData.userId}`);
+        const userData: UserDto = await apiFetch(`/api/user/${orderData.userId}`);
         setUser(userData);
       } catch (err) {
         console.error(err);
@@ -44,9 +43,7 @@ export default function OrderDetailPage() {
   }, [id]);
 
   const handleOrder = () => {
-    router.push(
-      `/order/complete?email=${encodeURIComponent(emailParam || user?.email || "")}`
-    );
+    router.push("/");
   };
 
   if (loading) {
@@ -98,7 +95,7 @@ export default function OrderDetailPage() {
             </div>
           </section>
 
-          {/* 상품 내역 - 스냅샷 데이터 사용 (별도 상품 조회 불필요) */}
+          {/* 상품 내역 */}
           <section className="mb-8">
             <h3 className="text-sm font-semibold mb-3">상품 내역</h3>
             {details.length === 0 ? (
@@ -111,13 +108,13 @@ export default function OrderDetailPage() {
                       <span className="text-lg">☕</span>
                     </div>
                     <span className="flex-1 text-sm font-medium">
-                      {detail.itemName}
+                      {detail.productName}
                     </span>
                     <span className="text-sm text-gray-500">
-                      {detail.itemPrice.toLocaleString()}원
+                      {detail.productPrice.toLocaleString()}원
                     </span>
                     <span className="text-sm text-gray-500">
-                      {detail.itemQuantity}개
+                      {detail.productQuantity}개
                     </span>
                   </div>
                 ))}
@@ -141,7 +138,7 @@ export default function OrderDetailPage() {
               onClick={handleOrder}
               className="flex-1 bg-gray-900 text-white py-3 rounded-xl text-sm font-semibold hover:bg-gray-700 transition-colors"
             >
-              주문 확정하기
+              확인
             </button>
           </div>
         </div>

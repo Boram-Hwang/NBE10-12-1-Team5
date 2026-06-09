@@ -26,13 +26,16 @@ export type OrderDto = {
   deliveryDate: string; // YYYY-MM-DD
 };
 
-export type OrderItemDto = {
+export type OrderProductDto = {
   id: number;
   createDate: string;
   modifyDate: string;
   orderId: number;
-  itemId: number;
-  itemQuantity: number;
-  itemName: string;
-  itemPrice: number;
+  productId: number;
+  productQuantity: number;
+  productName: string;
+  productPrice: number;
 };
+
+// 하위 호환성을 위해 유지
+export type OrderItemDto = OrderProductDto;

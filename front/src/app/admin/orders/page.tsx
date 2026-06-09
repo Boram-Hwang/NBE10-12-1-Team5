@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "@/lib/backend/client";
-import type { OrderItemDto, OrderDto, OrderStatus } from "@/type/order";
+import type { OrderProductDto, OrderDto, OrderStatus } from "@/type/order";
 import { ORDER_STATUS_LABEL } from "@/type/order";
 import type { UserDto } from "@/type/account";
-import type { ItemDto } from "@/type/product";
+import type { ProductDto } from "@/type/product";
 import type { RsData } from "@/type/rsData";
 
 const STATUS_STYLE: Record<OrderStatus, string> = {
@@ -53,23 +53,23 @@ function groupOrders(orders: OrderDto[]): OrderGroup[] {
   return Array.from(map.values());
 }
 
-// 여러 주문의 품목을 같은 itemId 기준으로 합산
-function combineItems(itemLists: OrderItemDto[][]): OrderItemDto[] {
-  const map = new Map<number, OrderItemDto>();
+// 여러 주문의 품목을 같은 productId 기준으로 합산
+function combineItems(itemLists: OrderProductDto[][]): OrderProductDto[] {
+  const map = new Map<number, OrderProductDto>();
   for (const list of itemLists) {
     for (const it of list) {
-      if (map.has(it.itemId)) {
-        const prev = map.get(it.itemId)!;
-        map.set(it.itemId, { ...prev, itemQuantity: prev.itemQuantity + it.itemQuantity });
+      if (map.has(it.productId)) {
+        const prev = map.get(it.productId)!;
+        map.set(it.productId, { ...prev, productQuantity: prev.productQuantity + it.productQuantity });
       } else {
-        map.set(it.itemId, { ...it });
+        map.set(it.productId, { ...it });
       }
     }
   }
   return Array.from(map.values());
 }
 
-type EditItem = { itemId: number; itemName: string; itemQuantity: number };
+type EditProduct = { productId: number; productName: string; productQuantity: number };
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<OrderDto[]>([]);
@@ -79,14 +79,14 @@ export default function OrdersPage() {
 
   // 선택된 그룹
   const [selectedGroup, setSelectedGroup] = useState<OrderGroup | null>(null);
-  const [selectedGroupItems, setSelectedGroupItems] = useState<OrderItemDto[]>([]);
+  const [selectedGroupItems, setSelectedGroupItems] = useState<OrderProductDto[]>([]);
   const [itemsLoading, setItemsLoading] = useState(false);
 
   // 수정 모달 (단일 주문)
   const [editingOrder, setEditingOrder] = useState<OrderDto | null>(null);
-  const [editItems, setEditItems] = useState<EditItem[]>([]);
-  const [allItems, setAllItems] = useState<ItemDto[]>([]);
-  const [addItemId, setAddItemId] = useState<number | "">("");
+  const [editProducts, setEditProducts] = useState<EditProduct[]>([]);
+  const [allProducts, setAllProducts] = useState<ProductDto[]>([]);
+  const [addProductId, setAddProductId] = useState<number | "">("");
   const [addQty, setAddQty] = useState(1);
   const [editSaving, setEditSaving] = useState(false);
 
@@ -97,8 +97,8 @@ export default function OrdersPage() {
     if (showLoading) setLoading(true);
     try {
       const [orderList, userList]: [OrderDto[], UserDto[]] = await Promise.all([
-        apiFetch("/api/orders"),
-        apiFetch("/api/users"),
+        apiFetch("/api/order"),
+        apiFetch("/api/user"),
       ]);
       setOrders(orderList);
       setUserMap(new Map(userList.map((u) => [u.id, u])));
@@ -117,7 +117,6 @@ export default function OrdersPage() {
   // 실시간 주문 동기화 이벤트 수신
   useEffect(() => {
     const handleRefresh = () => {
-      // 사용자 UX 흐름을 깨지 않기 위해 전체 화면 로딩바 없이 백그라운드에서 조용히 리프레시
       fetchAll(false);
     };
     window.addEventListener("refresh-orders", handleRefresh);
@@ -134,13 +133,13 @@ export default function OrdersPage() {
       const targets = ordersRef.current.filter((o) => {
         if (o.status !== "PENDING" && o.status !== "PROCESSING") return false;
         if (!o.deliveryDate) return false;
-        return now >= new Date(`${o.deliveryDate}T14:00:00`);
+        return now >= new Date(o.deliveryDate.replace(/-/g, "/") + " 14:00:00");
       });
       if (targets.length === 0) return;
       try {
         await Promise.all(
           targets.map((o) =>
-            apiFetch(`/api/orders/${o.id}`, {
+            apiFetch(`/api/order/${o.id}`, {
               method: "PUT",
               body: JSON.stringify({ status: "SHIPPED" }),
             })
@@ -187,8 +186,8 @@ export default function OrdersPage() {
     try {
       const itemLists = await Promise.all(
         group.orders.map((o) =>
-          apiFetch(`/api/orders/${o.id}/items`)
-            .then((res: RsData<OrderItemDto[]>) => res.data ?? [])
+          apiFetch(`/api/order/${o.id}/product`)
+            .then((res: RsData<OrderProductDto[]>) => res.data ?? [])
         )
       );
       setSelectedGroupItems(combineItems(itemLists));
@@ -203,7 +202,7 @@ export default function OrdersPage() {
   const applyStatusToGroup = async (group: OrderGroup, status: OrderStatus) => {
     await Promise.all(
       group.orders.map((o) =>
-        apiFetch(`/api/orders/${o.id}`, {
+        apiFetch(`/api/order/${o.id}`, {
           method: "PUT",
           body: JSON.stringify({ status }),
         })
@@ -211,7 +210,6 @@ export default function OrdersPage() {
     );
     const ids = new Set(group.orders.map((o) => o.id));
     setOrders((prev) => prev.map((o) => (ids.has(o.id) ? { ...o, status } : o)));
-    // 선택된 그룹 키가 바뀌므로 닫기
     setSelectedGroup(null);
     setSelectedGroupItems([]);
   };
@@ -234,31 +232,29 @@ export default function OrdersPage() {
   };
 
   // 개별 주문 단건 취소
-const handleSingleCancel = async (orderId: number) => {
-  if (!confirm(`주문 #${orderId} 단건을 취소할까?`)) return;
-  try {
-    await apiFetch(`/api/orders/${orderId}`, {
-      method: "PUT",
-      body: JSON.stringify({ status: "CANCELED" }),
-    });
-    // 전체 orders 상태 업데이트 (해당 주문만 CANCELED로 변경)
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: "CANCELED" } : o))
-    );
-    // 상태가 바뀌어서 그룹 구성이 달라지므로 우측 상세 패널 닫기
-    setSelectedGroup(null);
-    setSelectedGroupItems([]);
-  } catch {
-    alert("개별 취소 중 오류가 발생했어!");
-  }
-};
+  const handleSingleCancel = async (orderId: number) => {
+    if (!confirm(`주문 #${orderId} 단건을 취소할까?`)) return;
+    try {
+      await apiFetch(`/api/order/${orderId}`, {
+        method: "PUT",
+        body: JSON.stringify({ status: "CANCELED" }),
+      });
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: "CANCELED" } : o))
+      );
+      setSelectedGroup(null);
+      setSelectedGroupItems([]);
+    } catch {
+      alert("개별 취소 중 오류가 발생했어!");
+    }
+  };
 
   const handleDelete = async (group: OrderGroup) => {
     const count = group.orders.length;
     if (!confirm(`${count}건의 주문을 삭제하시겠습니까?`)) return;
     try {
       await Promise.all(
-        group.orders.map((o) => apiFetch(`/api/orders/${o.id}`, { method: "DELETE" }))
+        group.orders.map((o) => apiFetch(`/api/order/${o.id}`, { method: "DELETE" }))
       );
       const ids = new Set(group.orders.map((o) => o.id));
       setOrders((prev) => prev.filter((o) => !ids.has(o.id)));
@@ -274,17 +270,18 @@ const handleSingleCancel = async (orderId: number) => {
   // 수정 모달 (단일 주문 그룹만)
   const openEdit = async (order: OrderDto) => {
     setEditingOrder(order);
-    setAddItemId("");
+    setEditProducts([]);
+    setAddProductId("");
     setAddQty(1);
     try {
-      const [itemsRes, allRes]: [RsData<OrderItemDto[]>, ItemDto[]] = await Promise.all([
-        apiFetch(`/api/orders/${order.id}/items`),
-        apiFetch("/api/items"),
+      const [itemsRes, allRes]: [RsData<OrderProductDto[]>, ProductDto[]] = await Promise.all([
+        apiFetch(`/api/order/${order.id}/product`),
+        apiFetch("/api/Product"),
       ]);
-      setEditItems((itemsRes.data ?? []).map((d) => ({
-        itemId: d.itemId, itemName: d.itemName, itemQuantity: d.itemQuantity,
+      setEditProducts((itemsRes.data ?? []).map((d) => ({
+        productId: d.productId, productName: d.productName, productQuantity: d.productQuantity,
       })));
-      setAllItems(allRes);
+      setAllProducts(allRes);
     } catch {
       alert("주문 품목 조회 중 오류가 발생했습니다.");
       setEditingOrder(null);
@@ -293,40 +290,49 @@ const handleSingleCancel = async (orderId: number) => {
 
   const closeEdit = () => setEditingOrder(null);
 
-  const handleEditQty = (itemId: number, qty: number) =>
-    setEditItems((prev) => prev.map((it) => (it.itemId === itemId ? { ...it, itemQuantity: Math.max(1, qty) } : it)));
+  const handleEditQty = (productId: number, qty: number) =>
+    setEditProducts((prev) => prev.map((it) => (it.productId === productId ? { ...it, productQuantity: Math.max(1, qty) } : it)));
 
-  const handleEditRemove = (itemId: number) =>
-    setEditItems((prev) => prev.filter((it) => it.itemId !== itemId));
+  const handleEditRemove = (productId: number) =>
+    setEditProducts((prev) => prev.filter((it) => it.productId !== productId));
 
   const handleAddItem = () => {
-    if (!addItemId) return;
-    const item = allItems.find((i) => i.id === Number(addItemId));
-    if (!item) return;
-    const existing = editItems.find((it) => it.itemId === item.id);
+    if (!addProductId) return;
+    const product = allProducts.find((i) => i.id === Number(addProductId));
+    if (!product) return;
+    const existing = editProducts.find((it) => it.productId === product.id);
     if (existing) {
-      setEditItems((prev) => prev.map((it) =>
-        it.itemId === item.id ? { ...it, itemQuantity: it.itemQuantity + addQty } : it
+      setEditProducts((prev) => prev.map((it) =>
+        it.productId === product.id ? { ...it, productQuantity: it.productQuantity + addQty } : it
       ));
     } else {
-      setEditItems((prev) => [...prev, { itemId: item.id, itemName: item.name, itemQuantity: addQty }]);
+      setEditProducts((prev) => [...prev, { productId: product.id, productName: product.name, productQuantity: addQty }]);
     }
-    setAddItemId("");
+    setAddProductId("");
     setAddQty(1);
   };
 
   const handleEditSave = async () => {
-    if (!editingOrder || editItems.length === 0) {
+    if (!editingOrder || editProducts.length === 0) {
       alert("최소 1개 이상의 품목이 필요합니다.");
       return;
     }
     setEditSaving(true);
     try {
-      await apiFetch(`/api/orders/${editingOrder.id}/items`, {
+      await apiFetch(`/api/order/${editingOrder.id}/product`, {
         method: "PUT",
-        body: JSON.stringify(editItems.map((it) => ({ itemId: it.itemId, itemQuantity: it.itemQuantity }))),
+        body: JSON.stringify(editProducts.map((it) => ({ productId: it.productId, productQuantity: it.productQuantity }))),
       });
       await fetchAll(false);
+      if (selectedGroup) {
+        const itemLists = await Promise.all(
+          selectedGroup.orders.map((o) =>
+            apiFetch(`/api/order/${o.id}/product`)
+              .then((res: RsData<OrderProductDto[]>) => res.data ?? [])
+          )
+        );
+        setSelectedGroupItems(combineItems(itemLists));
+      }
       closeEdit();
     } catch {
       alert("수정 중 오류가 발생했습니다.");
@@ -406,13 +412,11 @@ const handleSingleCancel = async (orderId: number) => {
                     <td className="py-3 px-3 text-gray-700 text-xs font-medium">
                       {group.totalPrice.toLocaleString()}원
                     </td>
-                    {/* 상태 */}
                     <td className="py-3 px-3 text-center">
                       <span className={`text-xs px-2 py-1 rounded-lg ${STATUS_STYLE[group.status]}`}>
                         {ORDER_STATUS_LABEL[group.status]}
                       </span>
                     </td>
-                    {/* 작업 */}
                     <td className="py-3 px-3">
                       <div className="flex items-center justify-center gap-1 flex-wrap">
                         {group.status === "PENDING" && (
@@ -423,7 +427,6 @@ const handleSingleCancel = async (orderId: number) => {
                             주문 처리
                           </button>
                         )}
-                        {/* 수정: PENDING이고 단일 주문일 때만 */}
                         {group.status === "PENDING" && isSingle && (
                           <button
                             onClick={(e) => { e.stopPropagation(); openEdit(group.orders[0]); }}
@@ -432,7 +435,6 @@ const handleSingleCancel = async (orderId: number) => {
                             수정
                           </button>
                         )}
-                        {/* 취소: 백엔드 정책상 PENDING만 가능 */}
                         {group.status === "PENDING" && (
                           <button
                             onClick={(e) => { e.stopPropagation(); handleCancel(group); }}
@@ -534,7 +536,7 @@ const handleSingleCancel = async (orderId: number) => {
                   </div>
                 </div>
 
-                {/* 새로 추가하는 개별 주문 관리 (PENDING 상태일 때만 표시) */}
+                {/* 개별 주문 관리 (PENDING 상태일 때만 표시) */}
                 {selectedGroup.status === "PENDING" && (
                   <div className="mt-3 pt-3 border-t border-gray-200">
                     <h4 className="text-xs font-semibold text-gray-500 mb-2">개별 주문 관리</h4>
@@ -545,7 +547,6 @@ const handleSingleCancel = async (orderId: number) => {
                             #{o.id} <span className="text-gray-400 font-normal">({o.totalPrice.toLocaleString()}원)</span>
                           </span>
                           <div className="flex gap-1">
-                            {/* 기존에 있던 openEdit 함수를 개별 주문 객체로 그대로 호출! */}
                             <button
                               onClick={(e) => { e.stopPropagation(); openEdit(o); }}
                               className="px-2 py-1 bg-white border border-gray-200 rounded text-gray-600 hover:border-gray-400 hover:bg-gray-100 transition-colors"
@@ -565,7 +566,6 @@ const handleSingleCancel = async (orderId: number) => {
                   </div>
                 )}
 
-
                 {/* 합산 품목 */}
                 <div className="mt-3 pt-3 border-t border-gray-200">
                   <h4 className="text-xs font-semibold text-gray-500 mb-2">주문 품목</h4>
@@ -576,11 +576,11 @@ const handleSingleCancel = async (orderId: number) => {
                   ) : (
                     <div className="flex flex-col gap-1.5">
                       {selectedGroupItems.map((it) => (
-                        <div key={it.itemId} className="flex items-center justify-between text-xs gap-1">
-                          <span className="text-gray-700 truncate flex-1">{it.itemName}</span>
-                          <span className="text-gray-400 flex-shrink-0">×{it.itemQuantity}</span>
+                        <div key={it.productId} className="flex items-center justify-between text-xs gap-1">
+                          <span className="text-gray-700 truncate flex-1">{it.productName}</span>
+                          <span className="text-gray-400 flex-shrink-0">×{it.productQuantity}</span>
                           <span className="text-gray-600 flex-shrink-0 font-medium">
-                            {(it.itemPrice * it.itemQuantity).toLocaleString()}원
+                            {(it.productPrice * it.productQuantity).toLocaleString()}원
                           </span>
                         </div>
                       ))}
@@ -601,31 +601,31 @@ const handleSingleCancel = async (orderId: number) => {
               주문 #{editingOrder.id} 품목 수정
             </h2>
             <div className="space-y-2 mb-4 max-h-52 overflow-y-auto">
-              {editItems.length === 0 && (
+              {editProducts.length === 0 && (
                 <p className="text-sm text-gray-400 text-center py-4">품목이 없습니다.</p>
               )}
-              {editItems.map((it) => (
-                <div key={it.itemId} className="flex items-center gap-2">
-                  <span className="flex-1 text-sm truncate">{it.itemName}</span>
+              {editProducts.map((it) => (
+                <div key={it.productId} className="flex items-center gap-2">
+                  <span className="flex-1 text-sm truncate">{it.productName}</span>
                   <input
-                    type="number" min={1} value={it.itemQuantity}
-                    onChange={(e) => handleEditQty(it.itemId, Number(e.target.value))}
+                    type="number" min={1} value={it.productQuantity}
+                    onChange={(e) => handleEditQty(it.productId, Number(e.target.value))}
                     className="w-16 border border-gray-300 rounded px-2 py-1 text-sm text-center focus:outline-none"
                   />
                   <span className="text-xs text-gray-400">개</span>
-                  <button onClick={() => handleEditRemove(it.itemId)} className="text-xs text-red-400 hover:text-red-600 px-1">✕</button>
+                  <button onClick={() => handleEditRemove(it.productId)} className="text-xs text-red-400 hover:text-red-600 px-1">✕</button>
                 </div>
               ))}
             </div>
             <div className="flex gap-2 mb-5 pt-3 border-t border-gray-100">
               <select
-                value={addItemId}
-                onChange={(e) => setAddItemId(e.target.value === "" ? "" : Number(e.target.value))}
+                value={addProductId}
+                onChange={(e) => setAddProductId(e.target.value === "" ? "" : Number(e.target.value))}
                 className="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none"
               >
                 <option value="">상품 선택</option>
-                {allItems.map((item) => (
-                  <option key={item.id} value={item.id}>{item.name} ({item.price.toLocaleString()}원)</option>
+                {allProducts.map((prod) => (
+                  <option key={prod.id} value={prod.id}>{prod.name} ({prod.price.toLocaleString()}원)</option>
                 ))}
               </select>
               <input
@@ -633,7 +633,7 @@ const handleSingleCancel = async (orderId: number) => {
                 onChange={(e) => setAddQty(Math.max(1, Number(e.target.value)))}
                 className="w-16 border border-gray-300 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none"
               />
-              <button onClick={handleAddItem} disabled={!addItemId}
+              <button onClick={handleAddItem} disabled={!addProductId}
                 className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm hover:bg-gray-50 disabled:opacity-40">
                 추가
               </button>

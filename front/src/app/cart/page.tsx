@@ -32,16 +32,16 @@ export default function CartPage() {
     setCartItems(getCart());
   };
 
-  const handleQuantity = (itemId: number, delta: number) => {
+  const handleQuantity = (productId: number, delta: number) => {
     syncCart(() => {
-      const item = cartItems.find((c) => c.itemId === itemId);
+      const item = cartItems.find((c) => c.productId === productId);
       if (!item) return;
-      updateCartQuantity(itemId, Math.max(1, item.quantity + delta));
+      updateCartQuantity(productId, Math.max(1, item.quantity + delta));
     });
   };
 
-  const handleRemove = (itemId: number) => {
-    syncCart(() => removeFromCart(itemId));
+  const handleRemove = (productId: number) => {
+    syncCart(() => removeFromCart(productId));
   };
 
   const total = cartItems.reduce((sum, c) => sum + c.price * c.quantity, 0);
@@ -106,7 +106,7 @@ export default function CartPage() {
 
             <div className="space-y-4">
               {cartItems.map((item) => (
-                <div key={item.itemId} className="flex gap-3 items-start">
+                <div key={item.productId} className="flex gap-3 items-start">
                   <div className="w-16 h-16 rounded-xl flex-shrink-0 overflow-hidden">
                     <Image src="/coffee_bean.jpg" alt={item.name} width={64} height={64} className="w-full h-full object-cover" />
                   </div>
@@ -114,12 +114,12 @@ export default function CartPage() {
                     <p className="font-semibold text-sm truncate">{item.name}</p>
                     <p className="text-xs text-gray-500 mb-2">{item.price.toLocaleString()}원</p>
                     <div className="flex items-center gap-1">
-                      <button onClick={() => handleQuantity(item.itemId, -1)} className="w-6 h-6 border border-gray-300 rounded flex items-center justify-center text-sm hover:bg-gray-50">-</button>
+                      <button onClick={() => handleQuantity(item.productId, -1)} className="w-6 h-6 border border-gray-300 rounded flex items-center justify-center text-sm hover:bg-gray-50">-</button>
                       <span className="text-sm w-7 text-center font-medium">{item.quantity}</span>
-                      <button onClick={() => handleQuantity(item.itemId, 1)} className="w-6 h-6 border border-gray-300 rounded flex items-center justify-center text-sm hover:bg-gray-50">+</button>
+                      <button onClick={() => handleQuantity(item.productId, 1)} className="w-6 h-6 border border-gray-300 rounded flex items-center justify-center text-sm hover:bg-gray-50">+</button>
                     </div>
                   </div>
-                  <button onClick={() => handleRemove(item.itemId)} className="bg-red-400 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-red-500 transition-colors flex-shrink-0">
+                  <button onClick={() => handleRemove(item.productId)} className="bg-red-400 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-red-500 transition-colors flex-shrink-0">
                     삭제
                   </button>
                 </div>

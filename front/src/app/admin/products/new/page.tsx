@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/backend/client";
-import type { ItemDto } from "@/type/product";
+import type { ProductDto } from "@/type/product";
 import type { RsData } from "@/type/rsData";
 
 export default function ProductNewPage() {
@@ -41,7 +41,7 @@ export default function ProductNewPage() {
 
     setSubmitting(true);
     try {
-      const res: RsData<ItemDto> = await apiFetch("/api/items", {
+      const res: RsData<ProductDto> = await apiFetch("/api/Product", {
         method: "POST",
         body: JSON.stringify({
           name: form.name.trim(),

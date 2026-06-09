@@ -1,5 +1,5 @@
 export type CartItem = {
-  itemId: number;
+  productId: number;
   name: string;
   price: number;
   quantity: number;
@@ -18,7 +18,7 @@ export function getCart(): CartItem[] {
 
 export function addToCart(item: Omit<CartItem, "quantity">): void {
   const cart = getCart();
-  const existing = cart.find((c) => c.itemId === item.itemId);
+  const existing = cart.find((c) => c.productId === item.productId);
   if (existing) {
     existing.quantity += 1;
   } else {
@@ -27,15 +27,15 @@ export function addToCart(item: Omit<CartItem, "quantity">): void {
   sessionStorage.setItem(CART_KEY, JSON.stringify(cart));
 }
 
-export function updateCartQuantity(itemId: number, quantity: number): void {
+export function updateCartQuantity(productId: number, quantity: number): void {
   const cart = getCart().map((c) =>
-    c.itemId === itemId ? { ...c, quantity } : c
+    c.productId === productId ? { ...c, quantity } : c
   );
   sessionStorage.setItem(CART_KEY, JSON.stringify(cart));
 }
 
-export function removeFromCart(itemId: number): void {
-  const cart = getCart().filter((c) => c.itemId !== itemId);
+export function removeFromCart(productId: number): void {
+  const cart = getCart().filter((c) => c.productId !== productId);
   sessionStorage.setItem(CART_KEY, JSON.stringify(cart));
 }
 
